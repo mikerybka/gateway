@@ -46,6 +46,7 @@ func main() {
 		}
 		mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 			r.URL.Path = strings.TrimPrefix(r.URL.Path, u.Path)
+			fmt.Println(u.Path)
 			fmt.Println(r.URL.Path)
 			httputil.NewSingleHostReverseProxy(u).ServeHTTP(w, r)
 		})
