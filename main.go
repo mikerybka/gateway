@@ -48,7 +48,6 @@ func main() {
 			if r.URL.Path == "" {
 				r.URL.Path = "/"
 			}
-			fmt.Println(r.URL.Path)
 			proxy.ServeHTTP(w, r)
 		}
 		path := util.ParsePath(p.Path)
