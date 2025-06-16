@@ -40,7 +40,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		mux.Handle(fmt.Sprintf("%s/", host), httputil.NewSingleHostReverseProxy(u))
+		mux.Handle(fmt.Sprintf("%s/", pattern), httputil.NewSingleHostReverseProxy(u))
 	}
 	m := &autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
