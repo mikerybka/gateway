@@ -43,7 +43,10 @@ func main() {
 		if len(patternParts) == 1 {
 			pattern += "/"
 		}
-		mux.Handle(pattern, httputil.NewSingleHostReverseProxy(u))
+		mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+			r.URL.Path = strings.TrimPrefix(r.URL.Path, u.Path)
+			httputil.NewSingleHostReverseProxy(u).ServeHTTP(w, r)
+		})
 	}
 	m := &autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
