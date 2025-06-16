@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -34,13 +33,17 @@ func main() {
 	hosts := []string{}
 	mux := http.NewServeMux()
 	for pattern, backendURL := range conf {
-		host := strings.Split(pattern, "/")[0]
+		patternParts := strings.Split(pattern, "/")
+		host := patternParts[0]
 		hosts = append(hosts, host)
 		u, err := url.Parse(backendURL)
 		if err != nil {
 			panic(err)
 		}
-		mux.Handle(fmt.Sprintf("%s/", pattern), httputil.NewSingleHostReverseProxy(u))
+		if len(patternParts) == 1 {
+			pattern += "/"
+		}
+		mux.Handle(pattern, httputil.NewSingleHostReverseProxy(u))
 	}
 	m := &autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
