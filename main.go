@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -32,7 +33,8 @@ func main() {
 	}
 	hosts := []string{}
 	mux := http.NewServeMux()
-	for host, backendURL := range conf {
+	for pattern, backendURL := range conf {
+		host := strings.Split(pattern, "/")[0]
 		hosts = append(hosts, host)
 		u, err := url.Parse(backendURL)
 		if err != nil {
