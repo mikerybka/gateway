@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -32,7 +31,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(conf)
 	hosts := []string{}
 	mux := http.NewServeMux()
 	for pattern, backendURL := range conf {
