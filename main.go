@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/mikerybka/util"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -31,25 +32,31 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println(conf)
 	hosts := []string{}
 	mux := http.NewServeMux()
 	for pattern, backendURL := range conf {
-		patternParts := strings.Split(pattern, "/")
-		host := patternParts[0]
-		hosts = append(hosts, host)
+		p := parsePattern(pattern)
+		hosts = append(hosts, p.Host)
 		u, err := url.Parse(backendURL)
 		if err != nil {
 			panic(err)
 		}
-		if len(patternParts) == 1 {
-			pattern += "/"
-		}
-		mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-			r.URL.Path = strings.TrimPrefix(r.URL.Path, u.Path)
-			fmt.Println(u.Path)
+		proxy := httputil.NewSingleHostReverseProxy(u)
+		h := func(w http.ResponseWriter, r *http.Request) {
+			r.URL.Path = strings.TrimPrefix(r.URL.Path, p.Path)
+			if r.URL.Path == "" {
+				r.URL.Path = "/"
+			}
 			fmt.Println(r.URL.Path)
-			httputil.NewSingleHostReverseProxy(u).ServeHTTP(w, r)
-		})
+			proxy.ServeHTTP(w, r)
+		}
+		path := util.ParsePath(p.Path)
+		if len(path) > 0 {
+			mux.HandleFunc(pattern, h)
+		}
+		pattern += "/"
+		mux.HandleFunc(pattern, h)
 	}
 	m := &autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
@@ -67,4 +74,23 @@ func main() {
 		http.ListenAndServe(":80", m.HTTPHandler(nil))
 	}()
 	log.Fatal(server.ListenAndServeTLS("", "")) // Cert and key are managed by autocert
+}
+
+type Pattern struct {
+	Method string
+	Host   string
+	Path   string
+}
+
+func parsePattern(s string) *Pattern {
+	parts := strings.Split(s, " ")
+	p := &Pattern{}
+	if len(parts) == 2 {
+		p.Method = parts[0]
+		p.Host, p.Path, _ = strings.Cut(parts[1], "/")
+	} else {
+		p.Host, p.Path, _ = strings.Cut(parts[0], "/")
+	}
+	p.Path = "/" + p.Path
+	return p
 }
