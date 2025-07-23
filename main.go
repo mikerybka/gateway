@@ -15,6 +15,15 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+type Config map[string]struct {
+	Port string `json:"port"`
+	Auth struct {
+		User string `json:"user"`
+		Pass string `json:"pass"`
+		Dir  string `json:"dir"`
+	} `json:"auth"`
+}
+
 func main() {
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -26,16 +35,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	conf := map[string]string{}
+	conf := Config{}
 	err = json.Unmarshal(b, &conf)
 	if err != nil {
 		panic(err)
 	}
 	hosts := []string{}
 	mux := http.NewServeMux()
-	for pattern, backendURL := range conf {
+	for pattern, backend := range conf {
 		p := parsePattern(pattern)
 		hosts = append(hosts, p.Host)
+		backendURL := "http://localhost:" + backend.Port
 		u, err := url.Parse(backendURL)
 		if err != nil {
 			panic(err)
