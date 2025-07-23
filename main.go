@@ -52,6 +52,18 @@ func main() {
 		}
 		proxy := httputil.NewSingleHostReverseProxy(u)
 		h := func(w http.ResponseWriter, r *http.Request) {
+			// Auth
+			if backend.Auth.Dir != "" {
+				// TODO
+			} else if backend.Auth.User != "" || backend.Auth.Pass != "" {
+				user, pass, ok := r.BasicAuth()
+				if !ok && backend.Auth.User != user || backend.Auth.Pass != pass {
+					http.Error(w, "not authorized", http.StatusUnauthorized)
+					return
+				}
+			}
+
+			// Send req thru to backend
 			r.URL.Path = strings.TrimPrefix(r.URL.Path, p.Path)
 			if r.URL.Path == "" {
 				r.URL.Path = "/"
